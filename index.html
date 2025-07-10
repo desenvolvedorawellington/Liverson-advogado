@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secretária Virtual - Liverson Advogado</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: auto;
+    }
+    header {
+      background-color: #012e40;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    header img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    header h1 {
+      font-size: 1.3rem;
+      margin: 0;
+    }
+    .chat {
+      flex: 1;
+      padding: 1rem;
+      padding-top: 2rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      scroll-behavior: smooth;
+    }
+    .message {
+      background: #fff;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      max-width: 80%;
+      white-space: pre-wrap;
+    }
+    .bot {
+      background: #dfefff;
+      align-self: flex-start;
+    }
+    .user {
+      background: #cce8cc;
+      align-self: flex-end;
+    }
+    .input-area {
+      width: 100%;
+      display: flex;
+      padding: 10px;
+      background: #fff;
+      border-top: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    .input-area input,
+    .input-area input[type="datetime-local"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .input-area button {
+      margin-left: 10px;
+      background: #012e40;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .typing {
+      font-style: italic;
+      color: #999;
+    }
+    a.whatsapp-btn {
+      display: inline-block;
+      margin-top: 10px;
+      background-color: #25d366;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://via.placeholder.com/60" alt="Foto do advogado" />
+    <h1>Liverson Advogado</h1>
+  </header>
+
+  <div class="chat" id="chat"></div>
+
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="Digite aqui..." disabled />
+    <button id="sendBtn" onclick="sendMessage()" disabled>Enviar</button>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    let step = -1;
+    let userData = {
+      area: '',
+      nome: '',
+      resumo: '',
+      caso: '',
+      horario: ''
+    };
+
+    const introducao = [
+      "Olá! Seja muito bem-vindo ao escritório **Liverson Advogado** 👨‍⚖️",
+      "Atendemos de segunda a sexta-feira, das 9h às 18h. Nosso atendimento é exclusivo com hora marcada. 📅",
+      "Vamos iniciar seu atendimento a seguir:"
+    ];
+
+    const perguntas = [
+      "Com qual área do Direito você precisa de atendimento? (Trabalhista, Criminal, Família, Pequenas Causas)",
+      "Por favor, informe seu nome completo.",
+      "Me fala brevemente do que se trata sua causa. Qual é a situação atual?",
+      "Se quiser, pode acrescentar mais detalhes sobre o que está acontecendo.",
+      "Escolha o melhor dia e horário para o atendimento:",
+      "✅ Tudo certo! Abaixo está o link para enviar suas informações diretamente via WhatsApp."
+    ];
+
+    function showMessage(message, sender = 'bot', isHTML = false) {
+      const msg = document.createElement('div');
+      msg.className = `message ${sender}`;
+      msg.innerHTML = isHTML ? message : message.replace(/\n/g, '<br>');
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function setInputType(type = 'text') {
+      userInput.type = type;
+      userInput.value = '';
+      userInput.disabled = false;
+      sendBtn.disabled = false;
+      userInput.focus();
+    }
+
+    function startIntro(index = 0) {
+      if (index < introducao.length) {
+        showMessage('Digitando...', 'typing');
+        setTimeout(() => {
+          document.querySelector('.typing')?.remove();
+          showMessage(introducao[index]);
+          startIntro(index + 1);
+        }, 1200);
+      } else {
+        step = 0;
+        nextQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (step < perguntas.length) {
+        showMessage('Digitando...', 'typing');
+        setTimeout(() => {
+          document.querySelector('.typing')?.remove();
+          showMessage(perguntas[step]);
+
+          if (step === 4) {
+            setInputType('datetime-local');
+          } else if (step === perguntas.length - 1) {
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+
+            const msg =
+              `📄 *Relatório de Atendimento Jurídico - Liverson Advogado*\n\n` +
+              `👤 *Nome:* ${userData.nome}\n` +
+              `📚 *Área Jurídica:* ${userData.area}\n` +
+              `📌 *Resumo:* ${userData.resumo}\n` +
+              `📝 *Detalhes:* ${userData.caso}\n` +
+              `📅 *Melhor Horário:* ${userData.horario}\n\n` +
+              `Este cliente aguarda retorno para agendamento.\n` +
+              `Criado pela IA da desenvolvedora Wellington 🚀`;
+
+            const encodedMsg = encodeURIComponent(msg);
+            const waLink = `https://wa.me/5521996797905?text=${encodedMsg}`;
+            showMessage(`<a href="${waLink}" class="whatsapp-btn" target="_blank">📲 Enviar no WhatsApp</a>`, 'bot', true);
+          } else {
+            setInputType('text');
+          }
+        }, 1000);
+      }
+    }
+
+    function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      showMessage(text, 'user');
+
+      if (step === 0) userData.area = text;
+      if (step === 1) userData.nome = text;
+      if (step === 2) userData.resumo = text;
+      if (step === 3) userData.caso = text;
+      if (step === 4) userData.horario = text;
+
+      userInput.value = '';
+      userInput.disabled = true;
+      sendBtn.disabled = true;
+
+      step++;
+      nextQuestion();
+    }
+
+    window.addEventListener('resize', () => {
+      setTimeout(() => {
+        chat.scrollTop = chat.scrollHeight;
+      }, 300);
+    });
+
+    window.onload = () => {
+      startIntro();
+    };
+  </script>
+</body>
+</html>
